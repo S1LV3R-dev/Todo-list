@@ -6,6 +6,7 @@ import jwt
 
 users_bp = Blueprint('users', __name__)
 
+#adds user - registration
 @users_bp.route('/add_user', methods=['POST'])
 def add_user():
     username = request.json['username']
@@ -24,6 +25,7 @@ def add_user():
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
     return jsonify({"result": True, "message": "User added successfully!", 'token': token, 'id': new_user.id})
 
+#check if user exists and hased password from request equals hased password in database
 @users_bp.route('/login', methods=['POST'])
 def login():
     username = request.json['username']

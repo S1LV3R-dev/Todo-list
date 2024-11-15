@@ -7,9 +7,33 @@ import jwt
 
 tasks_bp = Blueprint('tasks', __name__)
 
+#helper function for fetching task by task id
 def get_task_by_id(id):
     return db.session.query(Task).filter_by(id=id).first()
 
+#helper function for fetching all tasks for user
+def fetch_tasks(user_id):
+    task_list_db = Task.query.filter_by(user_id=user_id).all()
+    task_list = [{
+        'id': task.id,
+        'title': task.title,
+        'description': task.description,
+        'done': task.done,
+        'created_at': task.created_at.strftime('%D %H:%M:%S')
+        } for task in task_list_db]
+    return task_list
+
+#decode jwt token
+def decode_token(token):
+    """Helper function to decode JWT token."""
+    try:
+        return jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"]), None, 200
+    except jwt.ExpiredSignatureError:
+        return None, 'Token expired!', 419
+    except jwt.InvalidTokenError:
+        return None, 'Invalid token!', 401
+
+#handles cors
 @tasks_bp.before_request
 def handle_cors():
     origin = request.headers.get('Origin')
@@ -25,19 +49,9 @@ def handle_cors():
         if request.method == 'OPTIONS':
             return response
 
-
-def decode_token(token):
-    """Helper function to decode JWT token."""
-    try:
-        return jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"]), None, 200
-    except jwt.ExpiredSignatureError:
-        return None, 'Token expired!', 419
-    except jwt.InvalidTokenError:
-        return None, 'Invalid token!', 401
-
+#authenticate user when trying to access tasks api
 @tasks_bp.before_request
 def auth():
-    """Middleware to authenticate requests."""
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({'result': False, 'message': 'This page requires authorization'}), 401
@@ -55,6 +69,7 @@ def auth():
     if str(user.id) != str(user_id):
         return jsonify({'result': False, 'message': "Wrong user id", 'user_id': user.id}), 403
 
+#create task route
 @tasks_bp.route('/create_task', methods=['POST'])
 def create_task():
     data = request.get_json()
@@ -74,17 +89,8 @@ def create_task():
     except Exception as e:
         return jsonify({'result': False, 'message': str(e)})
 
-def fetch_tasks(user_id):
-    task_list_db = Task.query.filter_by(user_id=user_id).all()
-    task_list = [{
-        'id': task.id,
-        'title': task.title,
-        'description': task.description,
-        'done': task.done,
-        'created_at': task.created_at.strftime('%D %H:%M:%S')
-        } for task in task_list_db]
-    return task_list
     
+#fetch all tasks
 @tasks_bp.route('/', methods=['GET'])
 def get_tasks():
     user_id = request.args.get('user_id', type=int)
@@ -94,6 +100,7 @@ def get_tasks():
     else:
         return jsonify({'tasks': []})
 
+#update task status
 @tasks_bp.route('/update', methods=['PUT'])
 def update_small():
     user_id = request.json['user_id']
@@ -106,17 +113,7 @@ def update_small():
     task_list = fetch_tasks(user_id)
     return jsonify({'tasks': task_list}), 200
 
-@tasks_bp.route('/delete', methods=['DELETE'])
-def delete_task():
-    user_id = request.json['user_id']
-    task_id = request.json['task_id']
-    task = get_task_by_id(task_id)  # Query the task
-    if task:
-        db.session.delete(task)  # Delete task
-        db.session.commit()
-    task_list = fetch_tasks(user_id)
-    return jsonify({'tasks': task_list}), 200
-
+#update task info
 @tasks_bp.route('/update', methods=['POST'])
 def update_full():
     data = request.get_json()
@@ -126,4 +123,16 @@ def update_full():
         task.description = data['description']
         db.session.commit() 
     task_list = fetch_tasks(data['user_id'])
+    return jsonify({'tasks': task_list}), 200
+
+#delete task
+@tasks_bp.route('/delete', methods=['DELETE'])
+def delete_task():
+    user_id = request.json['user_id']
+    task_id = request.json['task_id']
+    task = get_task_by_id(task_id)  # Query the task
+    if task:
+        db.session.delete(task)  # Delete task
+        db.session.commit()
+    task_list = fetch_tasks(user_id)
     return jsonify({'tasks': task_list}), 200

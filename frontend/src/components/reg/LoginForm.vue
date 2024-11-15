@@ -1,31 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { request } from '@/utils/globalFunctions.ts';
-import { useToast } from 'vue-toastification';
-import { useRouter } from 'vue-router';
-import BackButton from '@/components/buttons/BackButton.vue';
-import VueCookie from 'vue-cookie';
+// node modules
+import { ref } from 'vue'
+import { useToast } from 'vue-toastification'
+import { useRouter } from 'vue-router'
+import VueCookie from 'vue-cookie'
+
+// components
+import BackButton from '@/components/buttons/BackButton.vue'
+
+// functions
+import { request } from '@/utils/globalFunctions'
+
+// modules
+const toast = useToast()
+const router = useRouter()
 
 // Declare reactive variables
-const username = ref('');
-const password = ref('');
-
-const toast = useToast();
-const router = useRouter();
+const username = ref('')
+const password = ref('')
 
 // Handle form submission
-async function submitForm(){
-  const response = await request('/users/login', 'POST', {id: 1, username: username.value, password: password.value});
-  if (response.body.result){
-    toast.success(response.body.message);
-    VueCookie.set('token', response.body.token, { expires: '1d' });
-    VueCookie.set('id', response.body.id, { expires: '1d' });
-    router.replace('/tasks');
+async function submitForm() {
+  const response = await request('/users/login', 'POST', {
+    id: 1,
+    username: username.value,
+    password: password.value,
+  })
+  if (response.body.result) {
+    toast.success(response.body.message)
+    VueCookie.set('token', response.body.token, { expires: '1d' })
+    VueCookie.set('id', response.body.id, { expires: '1d' })
+    router.replace('/tasks')
+  } else {
+    toast.error(response.body.message)
   }
-  else{
-    toast.error(response.body.message);
-  }
-};
+}
 </script>
 
 <template>
@@ -48,7 +57,6 @@ async function submitForm(){
   </div>
 </template>
 
-
 <style lang="less" scoped>
 .login-container {
   display: flex;
@@ -67,7 +75,7 @@ async function submitForm(){
   max-width: 800px;
 }
 
-.title-group{
+.title-group {
   position: relative;
 }
 

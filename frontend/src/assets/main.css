@@ -1,10 +1,10 @@
 @import './base.css';
 
-::-webkit-scrollbar{
+::-webkit-scrollbar {
   width: 0;
 }
 
-body{
+body {
   background-color: #f1f1f1;
 }
 
@@ -43,7 +43,7 @@ a,
   }
 }
 @media (max-width: 1024px) {
-  #app{
+  #app {
     display: grid;
     padding: 0;
   }

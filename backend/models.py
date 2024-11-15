@@ -1,6 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
+
+#create users table in db
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -8,7 +10,7 @@ class User(db.Model):
     password = db.Column(db.String(80), nullable=False)
     tasks = db.relationship('Task', back_populates='user')
 
-
+#create tasks table in db
 class Task(db.Model):
     __tablename__ = 'tasks'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

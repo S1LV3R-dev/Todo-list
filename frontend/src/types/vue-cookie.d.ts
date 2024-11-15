@@ -1,4 +1,4 @@
 declare module 'vue-cookie' {
-  const VueCookie: any;
-  export default VueCookie;
+  const VueCookie: any
+  export default VueCookie
 }
