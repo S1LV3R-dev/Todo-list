@@ -329,9 +329,9 @@ a {
   width: 40vw;
   height: 85vh;
   flex-direction: column;
-  border: 1px solid black;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
   border-bottom: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: 15px 15px 0 0;
   & > div.header {
     height: 10%;
     min-height: 50px;
