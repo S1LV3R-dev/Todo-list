@@ -1,35 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { request } from '@/utils/globalFunctions.ts';
-import { useToast } from 'vue-toastification';
-import { useRouter } from 'vue-router';
+// node modules
+import { ref } from 'vue'
+import { useToast } from 'vue-toastification'
+import { useRouter } from 'vue-router'
+import VueCookie from 'vue-cookie'
+
+// components
 import BackButton from '@/components/buttons/BackButton.vue'
-import VueCookie from 'vue-cookie';
+
+// functions
+import { request } from '@/utils/globalFunctions'
+
+// modules
+const toast = useToast()
+const router = useRouter()
 
 // Declare reactive variables
-const username = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-
-const toast = useToast();
-const router = useRouter();
+const username = ref('')
+const password = ref('')
+const confirmPassword = ref('')
 
 // Handle form submission
 async function submitForm() {
-  const response = await request('/users/add_user', 'POST', {username: username.value, password: password.value});
-  if (response.body.result){
-    toast.success(response.body.message);
-    localStorage.setItem('token', response.body.token);
-    VueCookie.set('token', response.body.token, { expires: '1d' });
-    VueCookie.set('id', response.body.id, { expires: '1d' });
-    router.replace('/tasks');
+  const response = await request('/users/add_user', 'POST', {
+    username: username.value,
+    password: password.value,
+  })
+  if (response.body.result) {
+    toast.success(response.body.message)
+    localStorage.setItem('token', response.body.token)
+    VueCookie.set('token', response.body.token, { expires: '1d' })
+    VueCookie.set('id', response.body.id, { expires: '1d' })
+    router.replace('/tasks')
+  } else {
+    toast.error(response.body.message)
   }
-  else{
-    toast.error(response.body.message);
-  }
-};
-
-
+}
 </script>
 
 <template>
@@ -37,7 +43,7 @@ async function submitForm() {
     <form @submit.prevent="submitForm" class="form">
       <div class="form-group title-group">
         <BackButton />
-      <h2 class="form-title">Sign up</h2>
+        <h2 class="form-title">Sign up</h2>
       </div>
       <div class="form-group">
         <label for="username">Username</label>
@@ -46,20 +52,20 @@ async function submitForm() {
       <div class="form-group">
         <label for="password">Password</label>
         <input
-        :class="{
-          'error': password && confirmPassword && password !== confirmPassword
-        }"
-        type="password"
-        id="password"
-        v-model="password"
-        required
+          :class="{
+            error: password && confirmPassword && password !== confirmPassword,
+          }"
+          type="password"
+          id="password"
+          v-model="password"
+          required
         />
       </div>
       <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
         <input
           :class="{
-            'error': password && confirmPassword && password !== confirmPassword
+            error: password && confirmPassword && password !== confirmPassword,
           }"
           type="password"
           id="confirmPassword"
@@ -72,11 +78,12 @@ async function submitForm() {
           </p>
         </div>
       </div>
-      <button type="submit" class="submit-btn" :disabled="password !== confirmPassword">Register</button>
+      <button type="submit" class="submit-btn" :disabled="password !== confirmPassword">
+        Register
+      </button>
     </form>
   </div>
 </template>
-
 
 <style scoped>
 .registration-container {
@@ -91,7 +98,7 @@ input.error {
   box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
 }
 
-div.error_div{
+div.error_div {
   min-height: 25px;
 }
 
@@ -118,7 +125,7 @@ button:disabled:hover {
   max-width: 800px;
 }
 
-.title-group{
+.title-group {
   position: relative;
 }
 

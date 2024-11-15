@@ -5,12 +5,16 @@ from routes.tasks import tasks_bp
 from flask_cors import CORS
 from models import db
 
+#create app
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+
+#configure app
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'
 
+#register blueprints
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(tasks_bp, url_prefix='/api/tasks')
 
