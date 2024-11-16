@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 import jwt.exceptions
 from models import db, Task, User
-from datetime import datetime
+from datetime import datetime, timedelta
 import jwt
 
 
@@ -29,7 +29,7 @@ def decode_token(token):
     try:
         return jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"]), None, 200
     except jwt.ExpiredSignatureError:
-        return None, 'Token expired!', 419
+        return None, None, 419
     except jwt.InvalidTokenError:
         return None, 'Invalid token!', 401
 
@@ -53,21 +53,30 @@ def handle_cors():
 @tasks_bp.before_request
 def auth():
     token = request.headers.get('Authorization')
+    user_id = request.args.get('user_id', type=int)
+    if not user_id:
+        user_id = request.json['user_id']
     if not token:
         return jsonify({'result': False, 'message': 'This page requires authorization'}), 401
     token = token.split(" ")[1] if len(token.split(" ")) > 1 else ''
     dec_token, error, status_code = decode_token(token)
-    if error:
+    if str(status_code) == '419':
+        user = User.query.filter_by(id=user_id).first()
+        payload = {
+            'sub': user.username,
+            'exp': datetime.now() + timedelta(hours=1)
+        }
+        token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+        g.custom_data = {'token': token}
+    elif error:
         return jsonify({'result': False, 'message': error}), status_code
-    username = dec_token['sub']
-    user_id = request.args.get('user_id', type=int)
-    if not user_id:
-        user_id = request.json['user_id']
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return jsonify({'result': False, 'message': "This user does not exist"}), 401
-    if str(user.id) != str(user_id):
-        return jsonify({'result': False, 'message': "Wrong user id", 'user_id': user.id}), 403
+    else:
+        username = dec_token['sub']
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'result': False, 'message': "This user does not exist"}), 401
+        if str(user.id) != str(user_id):
+            return jsonify({'result': False, 'message': "Wrong user id", 'user_id': user.id}), 403
 
 #create task route
 @tasks_bp.route('/create_task', methods=['POST'])
@@ -136,3 +145,13 @@ def delete_task():
         db.session.commit()
     task_list = fetch_tasks(user_id)
     return jsonify({'tasks': task_list}), 200
+
+@tasks_bp.after_request
+def after_request(response):
+    # Inject custom data into the response (e.g., as a JSON field)
+    if response.is_json:
+        response_data = response.get_json()
+        if response_data is not None and hasattr(g, 'custom_data'):
+            response_data['token_new'] = g.custom_data['token']
+            response.set_data(jsonify(response_data).data)
+    return response

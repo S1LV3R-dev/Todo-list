@@ -1,3 +1,5 @@
+import VueCookie from "vue-cookie";
+
 export async function request(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -5,6 +7,7 @@ export async function request(
   auth_token: string = '',
 ): Promise<{ body: unknown[]; status: number }> {
   let response
+  // const api_url = 'https://anxiously-allowed-martin.cloudpub.ru:443'
   const api_url = 'http://localhost:5000'
   const cleanedData = JSON.parse(JSON.stringify(data)) // Clean input data
   try {
@@ -30,7 +33,11 @@ export async function request(
         body: JSON.stringify(cleanedData),
       })
     }
-    return { body: await response.json(), status: response.status } // Return parsed JSON or empty array
+    const responseData = await response.json();
+    if ('token_new' in responseData){
+      VueCookie.set('token', responseData.token_new)
+    };
+    return { body: responseData, status: response.status } // Return parsed JSON or empty array
   } catch (error) {
     console.error('Error during request:', error)
     return { body: [], status: 0 } // Return an empty array for network or parsing errors
