@@ -3,8 +3,7 @@ import VueCookie from "vue-cookie";
 export async function request(
   url: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  data: Record<string, unknown>,
-  auth_token: string = '',
+  data: Record<string, unknown> = {},
 ): Promise<{ body: unknown[]; status: number }> {
   let response
   // const api_url = 'https://anxiously-allowed-martin.cloudpub.ru:443'
@@ -16,9 +15,9 @@ export async function request(
       const requestString = new URLSearchParams(cleanedData).toString()
       response = await fetch(`${api_url}/api${url}?${requestString}`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth_token}`,
         },
       })
     }
@@ -26,9 +25,9 @@ export async function request(
     else {
       response = await fetch(`${api_url}/api${url}`, {
         method: method,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth_token}`,
         },
         body: JSON.stringify(cleanedData),
       })

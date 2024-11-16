@@ -12,9 +12,9 @@ const routes = [
   {
     path: '/',
     redirect: () => {
-      // Check if the token exists in cookies
-      const token = VueCookie.get('token')
-      return token ? '/tasks' : '/signinform'
+      // Check if user is authenticated
+      const auth = VueCookie.get('auth')
+      return auth ? '/tasks' : '/signinform'
     },
   },
   {

@@ -57,20 +57,17 @@ const task_list = computed(() =>
 )
 onBeforeMount(async () => {
   // Check if token exists in cookies
-  if (!VueCookie.get('token')) {
+  if (!VueCookie.get('auth')) {
     router.replace('/signinform')
   } else {
     const response = await request(
       '/tasks/',
       'GET',
-      { user_id: VueCookie.get('id') },
-      VueCookie.get('token'),
     )
 
     // Check if the response status is 401 (Unauthorized)
     if (response.status === 401) {
-      VueCookie.delete('id')
-      VueCookie.delete('token')
+      VueCookie.delete('auth')
       router.replace('/signinform')
     }
     if (response.body.tasks) {
@@ -83,8 +80,7 @@ async function create_task() {
   const response = await request(
     '/tasks/create_task',
     'POST',
-    { user_id: VueCookie.get('id'), title: title.value, description: desc.value },
-    VueCookie.get('token'),
+    { title: title.value, description: desc.value },
   )
 
   // check if task is created
@@ -108,8 +104,7 @@ async function update_task_done(id: number, done_value: boolean) {
   const response = await request(
     '/tasks/update',
     'PUT',
-    { user_id: VueCookie.get('id'), task_id: id, done: done_value },
-    VueCookie.get('token'),
+    { task_id: id, done: done_value },
   )
   if (response.body.tasks) {
     full_task_list.value = response.body.tasks
@@ -120,8 +115,7 @@ async function delete_task(id: number) {
   const response = await request(
     '/tasks/delete',
     'DELETE',
-    { user_id: VueCookie.get('id'), task_id: id },
-    VueCookie.get('token'),
+    { task_id: id },
   )
   if (response.body.tasks) {
     full_task_list.value = response.body.tasks
@@ -132,8 +126,7 @@ async function edit_task(id: number, title: string, desc: string) {
   const response = await request(
     '/tasks/update',
     'POST',
-    { user_id: VueCookie.get('id'), task_id: id, title: title.value, description: desc.value },
-    VueCookie.get('token'),
+    { task_id: id, title: title.value, description: desc.value },
   )
   if (response.body.tasks) {
     full_task_list.value = response.body.tasks
@@ -141,8 +134,7 @@ async function edit_task(id: number, title: string, desc: string) {
   }
 }
 async function logout() {
-  VueCookie.delete('id')
-  VueCookie.delete('token')
+  VueCookie.delete('auth')
   router.push('/signinform')
 }
 </script>

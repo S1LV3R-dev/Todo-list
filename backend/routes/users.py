@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, make_response
 from models import db, User
 import hashlib
 from datetime import datetime, timedelta
@@ -23,7 +23,23 @@ def add_user():
         'exp': datetime.now() + timedelta(hours=1)
     }
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
-    return jsonify({"result": True, "message": "User added successfully!", 'token': token, 'id': new_user.id})
+    response = make_response({"result": True, "message": "Login successful"})
+    # HTTPOnly cookies for xss protection
+    response.set_cookie(
+        "token", 
+        str(token), 
+        httponly=True,
+        secure=False,
+        samesite='None'
+    )
+    response.set_cookie(
+        "id", 
+        str(new_user.id), 
+        httponly=True,
+        secure=False,
+        samesite='None'
+    )
+    return response
 
 #check if user exists and hased password from request equals hased password in database
 @users_bp.route('/login', methods=['POST'])
@@ -39,7 +55,23 @@ def login():
                 'exp': datetime.now() + timedelta(hours=1)
             }
             token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
-            return jsonify({"result": True, "message": "Login successful", 'token': token, 'id': user.id})
+            response = make_response({"result": True, "message": "Login successful"})
+            # HTTPOnly cookies for xss protection
+            response.set_cookie(
+                "token", 
+                str(token), 
+                httponly=True,
+                secure=False,
+                samesite='None'
+            )
+            response.set_cookie(
+                "id", 
+                str(user.id), 
+                httponly=True,
+                secure=False,
+                samesite='None'
+            )
+            return response
         else:
             return jsonify({'result': False, 'message': 'Invalid password'}), 401
     else:

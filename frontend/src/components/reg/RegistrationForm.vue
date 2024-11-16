@@ -28,9 +28,7 @@ async function submitForm() {
   })
   if (response.body.result) {
     toast.success(response.body.message)
-    localStorage.setItem('token', response.body.token)
-    VueCookie.set('token', response.body.token, { expires: '1d' })
-    VueCookie.set('id', response.body.id, { expires: '1d' })
+    VueCookie.set('auth', true);
     router.replace('/tasks')
   } else {
     toast.error(response.body.message)

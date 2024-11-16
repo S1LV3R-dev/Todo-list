@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app, g
+from flask import Blueprint, request, jsonify, current_app, g, make_response
 import jwt.exceptions
 from models import db, Task, User
 from datetime import datetime, timedelta
@@ -41,10 +41,11 @@ def handle_cors():
     # Allow all origins (wildcard)
     if origin:
         # Set CORS headers
-        response = jsonify()
-        response.headers['Access-Control-Allow-Origin'] = '*'
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Requested-With, '
         # For OPTIONS request, return immediately
         if request.method == 'OPTIONS':
             return response
@@ -52,13 +53,12 @@ def handle_cors():
 #authenticate user when trying to access tasks api
 @tasks_bp.before_request
 def auth():
-    token = request.headers.get('Authorization')
-    user_id = request.args.get('user_id', type=int)
-    if not user_id:
-        user_id = request.json['user_id']
+    token = request.cookies.get('token')
+    print(token)
+    user_id = request.cookies.get('user_id')
     if not token:
         return jsonify({'result': False, 'message': 'This page requires authorization'}), 401
-    token = token.split(" ")[1] if len(token.split(" ")) > 1 else ''
+    token = token.split
     dec_token, error, status_code = decode_token(token)
     if str(status_code) == '419':
         user = User.query.filter_by(id=user_id).first()
@@ -102,7 +102,8 @@ def create_task():
 #fetch all tasks
 @tasks_bp.route('/', methods=['GET'])
 def get_tasks():
-    user_id = request.args.get('user_id', type=int)
+    user_id = request.cookies.get('user_id')
+    print(user_id)
     task_list = fetch_tasks(user_id)
     if task_list:
         return jsonify({'tasks': task_list})
@@ -112,7 +113,7 @@ def get_tasks():
 #update task status
 @tasks_bp.route('/update', methods=['PUT'])
 def update_small():
-    user_id = request.json['user_id']
+    user_id = request.cookies.get('user_id')
     task_id = request.json['task_id']
     done = request.json['done']
     task = db.session.query(Task).filter_by(id=task_id).first()  # Query the task
@@ -126,18 +127,19 @@ def update_small():
 @tasks_bp.route('/update', methods=['POST'])
 def update_full():
     data = request.get_json()
+    user_id = request.cookies.get('user_id')
     task = get_task_by_id(data['task_id']) # Query the task
     if task:
         task.title = data['title']
         task.description = data['description']
         db.session.commit() 
-    task_list = fetch_tasks(data['user_id'])
+    task_list = fetch_tasks(user_id)
     return jsonify({'tasks': task_list}), 200
 
 #delete task
 @tasks_bp.route('/delete', methods=['DELETE'])
 def delete_task():
-    user_id = request.json['user_id']
+    user_id = request.cookies.get('user_id')
     task_id = request.json['task_id']
     task = get_task_by_id(task_id)  # Query the task
     if task:
@@ -152,6 +154,12 @@ def after_request(response):
     if response.is_json:
         response_data = response.get_json()
         if response_data is not None and hasattr(g, 'custom_data'):
-            response_data['token_new'] = g.custom_data['token']
+            response.set_cookie(
+                "token", 
+                g.custom_data['token'], 
+                httponly=True,
+                secure=True,
+                samesite='Strict'
+            )
             response.set_data(jsonify(response_data).data)
     return response
